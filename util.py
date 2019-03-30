@@ -19,6 +19,7 @@ import torch
 import torch.autograd as autograd
 import torch.nn as nn
 import torch.nn.functional as F
+from bs4 import BeautifulSoup
 
 # training with SGLD with annealing and save models
 def train(X_train, y_train, X_valid, y_valid, X_test, y_test, model, args):
@@ -47,7 +48,8 @@ def train(X_train, y_train, X_valid, y_valid, X_test, y_test, model, args):
                 if args.static and layer_no == 0: # fixed embedding layer cannot update
                     continue
                 # by default I assume you train the models using GPU
-                noise = torch.cuda.FloatTensor(param.data.size()).normal_() * np.sqrt(epsilon / args.t)
+                # noise = torch.cuda.FloatTensor(param.data.size()).normal_() * np.sqrt(epsilon / args.t)
+                noise = torch.FloatTensor(param.data.size()).normal_() * np.sqrt(epsilon / args.t)
                 #noise = torch.cuda.FloatTensor(param.data.size()).normal_() * set_scale[layer_no]
                 parameters[layer_no].data += (- epsilon / 2 * param.grad + noise)
 

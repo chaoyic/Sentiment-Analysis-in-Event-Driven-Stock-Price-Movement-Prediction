@@ -21,10 +21,10 @@ import util
 class ReutersCrawler(object):
 
     def __init__(self):
-        self.ticker_list_filename = './input/tickerList.csv'
-        self.finished_reuters_filename = './input/finished.reuters'
-        self.failed_reuters_filename = './input/news_failed_tickers.csv'
-        self.news_filename = './input/news_reuters.csv'
+        self.ticker_list_filename = '../input/our_ticker_list.csv'
+        self.finished_reuters_filename = '../input/finished.reuters'
+        self.failed_reuters_filename = '../input/news_failed_tickers.csv'
+        self.news_filename = '../input/news_reuters.csv'
 
     def load_finished_tickers(self):
         # when we restart a task, we may call calc_finished_ticker() in crawler/yahoo_finance.py
@@ -49,7 +49,7 @@ class ReutersCrawler(object):
         ticker, name, exchange, market_cap = task
         print("%s - %s - %s - %s" % (ticker, name, exchange, market_cap))
 
-        suffix = {'AMEX': '.A', 'NASDAQ': '.O', 'NYSE': '.N'}
+        suffix = {'AMEX': '.A', 'NASDAQ': '.O', 'NYSE': '.N', '0.0': ''}
         # e.g. https://www.reuters.com/finance/stocks/company-news/BIDU.O?date=09262017
         url = "https://www.reuters.com/finance/stocks/company-news/" + ticker + suffix[exchange]
         
@@ -127,11 +127,11 @@ class ReutersCrawler(object):
                 fout.write(','.join([ticker, task[1], timestamp, title, body, news_type])+ '\n')
         return True
 
-    def run(self, numdays=1000):
+    def run(self, start=10, numdays=1000):
         """Start crawler back to numdays"""
         finished_tickers = self.load_finished_tickers()
         failed_tickers = self.load_failed_tickers()
-        date_range = util.generate_past_n_days(numdays) # look back on the past X days
+        date_range = util.generate_past_n_days(numdays)[start:] # look back on the past X days
 
         # store low-priority task and run later
         delayed_tasks = {'LOWEST': set(), 'LOW': set()}
@@ -157,7 +157,7 @@ class ReutersCrawler(object):
 
 def main():
     reuter_crawler = ReutersCrawler()
-    reuter_crawler.run(1)
+    reuter_crawler.run(210, 310)
 
 if __name__ == "__main__":
     main()

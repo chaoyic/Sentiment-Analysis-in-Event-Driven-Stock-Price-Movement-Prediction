@@ -40,8 +40,12 @@ parser.add_argument('-date', type=str, default='', help='date to be tested')
 args = parser.parse_args()
 
 # load tokenized features
-data = np.genfromtxt('./input/featureMatrix_train')
-test = np.genfromtxt('./input/featureMatrix_test')
+# data = np.genfromtxt('./input/featureMatrix_train')
+# test = np.genfromtxt('./input/featureMatrix_test')
+# data = np.genfromtxt('./input/sampleFeatureMatrix_train')
+# test = np.genfromtxt('./input/sampleFeatureMatrix_test')
+data = np.genfromtxt('./input/sample2FeatureMatrix_train.txt')
+test = np.genfromtxt('input/sample2FeatureMatrix_test.txt')
 np.random.shuffle(data)
 X, y = data[:, :-1], data[:, -1]
 label = util.value2int_simple(y).astype("int") # using direction to label
@@ -50,6 +54,7 @@ validation_ratio = 0.05
 X = X.astype('float32')
 D = int(data.shape[0] * validation_ratio)  # total number of validation data
 X_train, y_train, X_valid, y_valid = X[:-D], label[:-D], X[-D:], label[-D:]
+# if a.size != 0:
 X_test, y_test = test[:, :-1], test[:, -1]
 
 #print("Positive News Ratio", sum(y_test > 0) * 1. / (sum(y_test > 0) + sum(y_test < 0)))

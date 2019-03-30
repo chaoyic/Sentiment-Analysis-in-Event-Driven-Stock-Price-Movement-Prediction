@@ -27,9 +27,9 @@ def tokenize(news_file, price_file, stopWords_file, output, output_wd2idx, sen_l
     # load price data
     with open(price_file) as file:
         print("Loading price info ... " + mtype)
-        priceDt = json.load(file)[term_type]
+        priceDt = json.load(file)
 
-    testDates = util.dateGenerator(90) # the most recent days are used for testing
+    testDates = util.dateGenerator(20) # the most recent days are used for testing
     os.system('rm ' + output + mtype)
 
     # load stop words
@@ -44,7 +44,7 @@ def tokenize(news_file, price_file, stopWords_file, output, output_wd2idx, sen_l
     current_idx = 2
     word_idx_count = {0: float('inf'), 1: float('inf')}
     sentences, labels = [], []
-    os.system('cat ./input/news/*/* > ./input/news_reuters.csv')
+    # os.system('cat ./input/news/*/* > ./input/news_reuters.csv')
     with open(news_file) as f:
         for num, line in enumerate(f):
             line = line.strip().split(',')
@@ -59,14 +59,16 @@ def tokenize(news_file, price_file, stopWords_file, output, output_wd2idx, sen_l
             
             if ticker not in priceDt: 
                 continue # skip if no corresponding company found
-            if day not in priceDt[ticker]: 
+            if not priceDt[ticker]:
+                continue # skip if corresponding company has price info as None
+            if day not in priceDt[ticker]['open']:
                 continue # skip if no corresponding date found
 
             if num % 10000 == 0: 
                 print("%sing samples %d" % (mtype, num))
-            if mtype == "test" and day not in testDates: 
+            if mtype == "test" and day.replace('-','') not in testDates:
                 continue
-            if mtype == "train" and day in testDates: 
+            if mtype == "train" and day.replace('-','') in testDates:
                 continue
             content = headline + ' ' + body
             content = content.replace("-", " ") 
@@ -81,7 +83,11 @@ def tokenize(news_file, price_file, stopWords_file, output, output_wd2idx, sen_l
                 word_idx_count[idx] = word_idx_count.get(idx, 0) + 1
             sentence_by_idx = [word2idx[t] for t in tokens if t not in stopWords]
             sentences.append(sentence_by_idx)
-            labels.append(round(priceDt[ticker][day], 6))
+            price_dict_of_current_ticker = priceDt[ticker]
+            open_price = price_dict_of_current_ticker['open'][day]
+            close_price = price_dict_of_current_ticker['close'][day]
+            change = (open_price - close_price) / open_price
+            labels.append(round(change, 6))
 
     # restrict vocab size
     sorted_word_idx_count = sorted(word_idx_count.items(), key=operator.itemgetter(1), reverse=True)
@@ -99,7 +105,7 @@ def tokenize(news_file, price_file, stopWords_file, output, output_wd2idx, sen_l
         if count == "inf" or count == float('inf'):
             continue
         cdf += (count * 1.0 / (total_num * 1.0))
-        print(word, count, str(cdf)[:5])
+        # print(word, count, str(cdf)[:5])
         word2idx_small[word] = new_idx
         idx_new_idx_map[idx] = new_idx
         new_idx += 1
@@ -132,12 +138,14 @@ def tokenize(news_file, price_file, stopWords_file, output, output_wd2idx, sen_l
         np.savetxt(file, features, fmt="%s")
 
 def main():
-    news_file = "./input/news_reuters.csv"
+    # news_file = "./input/our_news_reuters.csv"
+    news_file = "./input/sample_news_reuters.csv"
     stopWords_file = "./input/stopWords"
-    price_file = "./input/stockReturns.json"
+    price_file = "./input/stockPrices_raw.json"
 
     
-    output = './input/featureMatrix_'
+    # output = './input/featureMatrix_'
+    output = './input/sampleFeatureMatrix_'
     output_wd2idx = "./input/word2idx"
 
     parser = argparse.ArgumentParser(description='Tokenize Reuters news')
